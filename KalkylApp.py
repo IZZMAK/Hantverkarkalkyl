@@ -97,7 +97,7 @@ if submitted:
     justerat_timpris = timpris * svarighets_faktor * risk_faktor
     arbetskostnad = arbetstid * justerat_timpris
 
-    rot_avdrag = min(arbetskostnad * 0.30, 50000) if anvand_rot else 0
+    rot_avdrag = min(arbetskostnad * 0.5, 50000) if anvand_rot else 0
     totalsumma_före_rot = arbetskostnad + materialkostnad + hyra_utrustning
     totalsumma_efter_rot = totalsumma_före_rot - rot_avdrag
     totalsumma_inkl_moms = totalsumma_efter_rot * (1 + moms_procent / 100)
