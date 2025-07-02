@@ -123,7 +123,7 @@ Totalt inkl. moms: {total_inkl_moms:.2f} kr"""
     if anvand_rot:
         offert_text += f"""
 
-ROT-avdrag (30% av arbetskostnad inkl. moms): -{rot_avdrag:.2f} kr
+ROT-avdrag (50% av arbetskostnad inkl. moms): -{rot_avdrag:.2f} kr
 Att betala efter ROT: {slutbelopp:.2f} kr"""
     else:
         offert_text += f"""
