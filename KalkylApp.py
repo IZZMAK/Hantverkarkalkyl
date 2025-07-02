@@ -80,7 +80,7 @@ with st.form("input_form"):
     riskniva = st.selectbox("Risknivå i arbetet", ["Låg", "Medel", "Hög"])
 
     st.header(":money_with_wings: ROT-avdrag")
-    anvand_rot = st.checkbox("Tillämpa ROT-avdrag (50% på arbetskostnad upp till 50 000 kr)")
+    anvand_rot = st.checkbox("Tillämpa ROT-avdrag (30% på arbetskostnad inkl. moms upp till 50 000 kr)")
 
     moms_procent = st.slider("Moms (%)", 0, 50, 25)
 
@@ -96,11 +96,15 @@ if submitted:
 
     justerat_timpris = timpris * svarighets_faktor * risk_faktor
     arbetskostnad = arbetstid * justerat_timpris
+    moms_multiplier = 1 + moms_procent / 100
 
-    rot_avdrag = min(arbetskostnad * 0.5, 50000) if anvand_rot else 0
-    totalsumma_före_rot = arbetskostnad + materialkostnad + hyra_utrustning
-    totalsumma_efter_rot = totalsumma_före_rot - rot_avdrag
-    totalsumma_inkl_moms = totalsumma_före_rot * (1 + moms_procent / 100)
+    arbetskostnad_moms = arbetskostnad * moms_multiplier
+    total_exkl_moms = arbetskostnad + materialkostnad + hyra_utrustning
+    total_moms = total_exkl_moms * moms_procent / 100
+    total_inkl_moms = total_exkl_moms + total_moms
+
+    rot_avdrag = min(arbetskostnad_moms * 0.50, 50000) if anvand_rot else 0
+    slutbelopp = total_inkl_moms - rot_avdrag
 
     st.subheader(":receipt: Offert")
     offert_text = f"""Offert - {datetime.today().strftime('%Y-%m-%d')}
@@ -109,18 +113,22 @@ Adress: {kund_adress}
 Arbetsbeskrivning: {arbetsbeskrivning}
 
 Justerat timpris: {justerat_timpris:.2f} kr
-
-Arbetskostnad: {arbetskostnad:.2f} kr
-
+Arbetskostnad (exkl. moms): {arbetskostnad:.2f} kr
 Material + verktyg: {materialkostnad + hyra_utrustning:.2f} kr
 
-Totalt före ROT (exkl. moms): {totalsumma_före_rot:.2f} kr
+Totalt exkl. moms: {total_exkl_moms:.2f} kr
+Moms ({moms_procent}%): {total_moms:.2f} kr
+Totalt inkl. moms: {total_inkl_moms:.2f} kr"""
 
-ROT-avdrag: -{rot_avdrag:.2f} kr
+    if anvand_rot:
+        offert_text += f"""
 
-Totalt efter ROT (exkl. moms): {totalsumma_efter_rot:.2f} kr
+ROT-avdrag (30% av arbetskostnad inkl. moms): -{rot_avdrag:.2f} kr
+Att betala efter ROT: {slutbelopp:.2f} kr"""
+    else:
+        offert_text += f"""
 
-Totalt inkl. moms: {totalsumma_inkl_moms:.2f} kr"""
+Att betala: {slutbelopp:.2f} kr"""
 
     st.text(offert_text)
 
