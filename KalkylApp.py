@@ -80,7 +80,7 @@ with st.form("input_form"):
     riskniva = st.selectbox("Risknivå i arbetet", ["Låg", "Medel", "Hög"])
 
     st.header(":money_with_wings: ROT-avdrag")
-    anvand_rot = st.checkbox("Tillämpa ROT-avdrag (30% på arbetskostnad upp till 50 000 kr)")
+    anvand_rot = st.checkbox("Tillämpa ROT-avdrag (50% på arbetskostnad upp till 50 000 kr)")
 
     moms_procent = st.slider("Moms (%)", 0, 50, 25)
 
