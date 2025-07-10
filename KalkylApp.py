@@ -8,7 +8,7 @@ st.set_page_config(page_title="Hantverkarkalkyl", page_icon="🛠️", layout="w
 
 # Stabil ikon (ingen bruten länk)
 st.image("https://img.icons8.com/fluency/64/toolbox.png", width=64)
-st.title("Hantverkarkalkyl – Offert & Lönekalkyl (Bokio)")
+st.title("Hantverkarkalkyl – Offert & Lönekalkyl")
 
 st.markdown("**ROT‑avdrag 50 %**  •  Alla priser anges *exklusive* moms i inmatningen")
 
@@ -39,7 +39,7 @@ with st.form("calc_form"):
     anvand_rot = st.checkbox("Tillämpa ROT‑avdrag (50 % på arbetskostnad inkl. moms, max 50 000 kr)")
 
     # Bokio‑del i expander för att spara plats
-    with st.expander("Lönekalkyl (Bokio‑metod) – klicka för detaljer"):
+    with st.expander("Lönekalkyl – klicka för detaljer"):
         l1, l2 = st.columns(2)
         with l1:
             ar = st.selectbox("Skatteår", [2025, 2026, 2027])
@@ -107,7 +107,7 @@ if submitted:
         st.metric("Fika (netto)", f"{fikan_uppdrag:,.0f} kr")
 
     st.markdown("---")
-    st.subheader("Lönekalkyl (helår, Bokio‑modell)")
+    st.subheader("Lönekalkyl (helår)")
     st.text(f"Nettobelopp efter skatt: {nettolon:,.0f} kr")
 
     # ---------- PDF ----------
