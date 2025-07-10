@@ -3,163 +3,115 @@ from datetime import datetime
 import os
 from fpdf import FPDF
 
+# Sida och titel
 st.set_page_config(page_title="Kalkyl för Hantverkare", page_icon="💼")
-
 st.image("https://img.icons8.com/external-flaticons-lineal-color-flat-icons/64/000000/external-construction-project-management-flaticons-lineal-color-flat-icons.png", width=60)
 st.title("Avancerat Kalkylverktyg för Hantverkare")
-st.markdown("*Skapa professionella offerter med tid, material, svårighet, risk och ROT-avdrag.*")
+st.markdown("*Offert med ROT-avdrag och lönekalkyl enligt Bokios metod för enskild firma (<200 000 kr)*")
 
+# Indata
 with st.form("input_form"):
-    st.header(":bust_in_silhouette: Kunduppgifter")
+    st.header("Kunduppgifter")
     kund_namn = st.text_input("Kundens namn")
     kund_adress = st.text_input("Adress")
-    arbetsbeskrivning = st.text_area("Beskrivning av arbetet")
+    arbetsbeskrivning = st.text_area("Arbetsbeskrivning")
 
-    st.header(":hammer: Automatiserad Tidsuppskattning")
-    jobb_typ = st.selectbox("Typ av arbete", [
-        "Välj...", "Måla vägg/tak", "Byta fönster", "Lägga golv", "Renovera badrum",
-        "Takläggning", "Montera köksskåp", "Installera dörrar", "Bygga innervägg", "Anpassat snickeri"
-    ])
+    st.header("Prisuppgifter")
+    arbetstid = st.number_input("Arbetstid (timmar)", min_value=0.0, value=10.0)
+    timpris = st.number_input("Timpris (kr/tim)", min_value=0.0, value=500.0)
 
-    uppskattad_tid = 0
-    if jobb_typ == "Måla vägg/tak":
-        langd = st.number_input("Väggens längd (m)", min_value=0.0, value=5.0)
-        hojd = st.number_input("Väggens höjd (m)", min_value=0.0, value=2.5)
-        antal_vaggar = st.number_input("Antal väggar", min_value=1, value=4)
-        fonster = st.number_input("Antal fönster", min_value=0, value=2)
-        dorar = st.number_input("Antal dörrar", min_value=0, value=1)
-        yta = langd * hojd * antal_vaggar - fonster * 1.5 - dorar * 2
-        uppskattad_tid = max(0, yta * 0.25)
-
-    elif jobb_typ == "Byta fönster":
-        antal = st.number_input("Antal fönster", min_value=1, value=2)
-        uppskattad_tid = antal * 3
-
-    elif jobb_typ == "Lägga golv":
-        golvyta = st.number_input("Yta (m²)", min_value=1.0, value=20.0)
-        uppskattad_tid = golvyta * 0.4
-
-    elif jobb_typ == "Renovera badrum":
-        yta = st.number_input("Badrummets yta (m²)", min_value=1.0, value=6.0)
-        uppskattad_tid = yta * 3
-
-    elif jobb_typ == "Takläggning":
-        takyta = st.number_input("Takyta (m²)", min_value=1.0, value=30.0)
-        uppskattad_tid = takyta * 0.7
-
-    elif jobb_typ == "Montera köksskåp":
-        antal = st.number_input("Antal skåp", min_value=1, value=6)
-        uppskattad_tid = antal * 0.75
-
-    elif jobb_typ == "Installera dörrar":
-        antal = st.number_input("Antal dörrar", min_value=1, value=2)
-        uppskattad_tid = antal * 1.5
-
-    elif jobb_typ == "Bygga innervägg":
-        längd = st.number_input("Längd på innervägg (m)", min_value=1.0, value=4.0)
-        uppskattad_tid = längd * 1.2
-
-    elif jobb_typ == "Anpassat snickeri":
-        yta = st.number_input("Yta (m²)", min_value=1.0, value=10.0)
-        detalj = st.selectbox("Detaljnivå", ["Standard", "Avancerat"])
-        uppskattad_tid = yta * (1 if detalj == "Standard" else 2)
-
-    if uppskattad_tid > 0:
-        st.success(f"Föreslagen arbetstid: {uppskattad_tid:.1f} timmar")
-
-    st.header(":calendar: Arbetstid och Svårighetsgrad")
-    arbetstid = st.number_input("Hur många timmar tar arbetet?", min_value=0.0, value=uppskattad_tid or 10.0)
-    timpris = st.number_input("Timpris (kr)", min_value=0.0, value=450.0)
-    svarighetsgrad = st.selectbox("Svårighetsgrad", ["Låg", "Medel", "Hög"])
-
-    st.header(":toolbox: Material och Verktyg")
+    st.subheader("Material & Övriga kostnader")
     materialkostnad = st.number_input("Materialkostnader (kr)", min_value=0.0, value=2000.0)
-    hyra_utrustning = st.number_input("Hyra av verktyg/maskiner (kr)", min_value=0.0, value=0.0)
+    hyra_stallning = st.number_input("Hyra ställning (kr)", min_value=0.0, value=0.0)
+    reseersattning = st.number_input("Resekostnader (kr)", min_value=0.0, value=0.0)
+    bortforsling = st.number_input("Transportkostnader (kr)", min_value=0.0, value=0.0)
 
-    st.header(":warning: Risknivå")
-    riskniva = st.selectbox("Risknivå i arbetet", ["Låg", "Medel", "Hög"])
-
-    st.header(":money_with_wings: ROT-avdrag")
-    anvand_rot = st.checkbox("Tillämpa ROT-avdrag (50% på arbetskostnad inkl. moms upp till 50 000 kr)")
-
-    moms_procent = st.slider("Moms (%)", 0, 50, 25)
-
-    st.header(":page_facing_up: Export & Utskrift")
-    exportera_pdf = st.checkbox("Förbered offert för utskrift (PDF)")
-    spara_offert = st.checkbox("Spara offerten som textfil")
+    anvand_rot = st.checkbox("Tillämpa ROT-avdrag (30% av arbetskostnad inkl. moms, max 50 000 kr)")
 
     submitted = st.form_submit_button("Beräkna offert")
 
 if submitted:
-    svarighets_faktor = {"Låg": 1.0, "Medel": 1.15, "Hög": 1.3}[svarighetsgrad]
-    risk_faktor = {"Låg": 1.0, "Medel": 1.1, "Hög": 1.25}[riskniva]
+    # Grundberäkningar
+    arbetskostnad = arbetstid * timpris
+    direkta_kostnader = materialkostnad + hyra_stallning + reseersattning + bortforsling
+    moms_sats = 0.25
+    total_exkl_moms = arbetskostnad + direkta_kostnader
+    moms_belopp = total_exkl_moms * moms_sats
+    total_inkl_moms = total_exkl_moms + moms_belopp
 
-    justerat_timpris = timpris * svarighets_faktor * risk_faktor
-    arbetskostnad = arbetstid * justerat_timpris
-    moms_multiplier = 1 + moms_procent / 100
-
-    arbetskostnad_moms = arbetskostnad * moms_multiplier
-    total_exkl_moms = arbetskostnad + materialkostnad + hyra_utrustning
-    total_moms = total_exkl_moms * moms_procent / 100
-    total_inkl_moms = total_exkl_moms + total_moms
-
-    rot_avdrag = min(arbetskostnad_moms * 0.50, 50000) if anvand_rot else 0
-    slutbelopp = total_inkl_moms - rot_avdrag
-
-    st.subheader(":receipt: Offert")
-    offert_text = f"""Offert - {datetime.today().strftime('%Y-%m-%d')}
-Kund: {kund_namn}
-Adress: {kund_adress}
-Arbetsbeskrivning: {arbetsbeskrivning}
-
-Justerat timpris: {justerat_timpris:.2f} kr
-Arbetskostnad (exkl. moms): {arbetskostnad:.2f} kr
-Material + verktyg: {materialkostnad + hyra_utrustning:.2f} kr
-
-Totalt exkl. moms: {total_exkl_moms:.2f} kr
-Moms ({moms_procent}%): {total_moms:.2f} kr
-Totalt inkl. moms: {total_inkl_moms:.2f} kr"""
-
+    # ROT-avdrag (på arbetskostnad inkl. moms)
+    rot_avdrag = 0
     if anvand_rot:
-        offert_text += f"""
+        rot_avdrag = min(arbetskostnad * (1 + moms_sats) * 0.30, 50000)
+    att_betala = total_inkl_moms - rot_avdrag
 
-ROT-avdrag (50% av arbetskostnad inkl. moms): -{rot_avdrag:.2f} kr
-Att betala efter ROT: {slutbelopp:.2f} kr"""
-    else:
-        offert_text += f"""
+    # Bokios lönekalkyl-metod:
+    # 1) Vinst före schablonavdrag = total_exkl_moms - direkta kostnader
+    vinst = total_exkl_moms - direkta_kostnader
+    # 2) Schablonavdrag 25% av vinsten
+    schablon = vinst * 0.25
+    skattemässig_vinst = vinst - schablon
+    # 3) Sociala avgifter 28.97% på skattemässig vinst
+    social_avgift = skattemässig_vinst * 0.2897
+    # 4) Nettovinst efter egenavgifter
+    netto_efter_egenavg = skattemässig_vinst - social_avgift
+    # 5) Kommunalskatt 32% på nettovinst (under 200 000 kr -> ingen statlig)
+    kommunalskatt = netto_efter_egenavg * 0.32
+    # 6) Lön kvar (fika) efter skatt
+    fikan = netto_efter_egenavg - kommunalskatt
 
-Att betala: {slutbelopp:.2f} kr"""
+    # Visa resultat
+    st.subheader("Offert")
+    st.text(f"Totalt exkl. moms: {total_exkl_moms:.2f} kr")
+    st.text(f"Moms (25%): {moms_belopp:.2f} kr")
+    st.text(f"Totalt inkl. moms: {total_inkl_moms:.2f} kr")
+    if anvand_rot:
+        st.text(f"ROT-avdrag: -{rot_avdrag:.2f} kr")
+    st.text(f"Att betala: {att_betala:.2f} kr")
+    st.markdown("---")
+    st.subheader("Lönekalkyl enligt Bokio")
+    st.text(f"Vinst före schablonavdrag: {vinst:.2f} kr")
+    st.text(f"Schablonavdrag (25%): -{schablon:.2f} kr")
+    st.text(f"Skattemässig vinst: {skattemässig_vinst:.2f} kr")
+    st.text(f"Sociala avgifter (28.97%): {social_avgift:.2f} kr")
+    st.text(f"Nettovinst efter egenavgifter: {netto_efter_egenavg:.2f} kr")
+    st.text(f"Kommunalskatt (32%): {kommunalskatt:.2f} kr")
+    st.subheader(f"Att behålla (fika) efter skatt: {fikan:.2f} kr")
 
-    st.text(offert_text)
-
-    if exportera_pdf:
-        class PDF(FPDF):
-            def header(self):
-                self.set_font("Arial", "B", 14)
-                self.cell(0, 10, "Offert - Hantverkartjänster", 0, 1, "C")
-                self.ln(10)
-
-            def footer(self):
-                self.set_y(-15)
-                self.set_font("Arial", "I", 8)
-                self.cell(0, 10, f"Sida {self.page_no()}", 0, 0, "C")
-
-        pdf = PDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-        for line in offert_text.split("\n"):
-            pdf.multi_cell(0, 10, line)
-
-        pdf_file = f"offert_{kund_namn.replace(' ', '_')}_{datetime.today().strftime('%Y%m%d')}.pdf"
-        pdf.output(pdf_file)
-        with open(pdf_file, "rb") as f:
-            st.download_button("📅 Ladda ner offert som PDF", f, file_name=pdf_file, mime="application/pdf")
-        os.remove(pdf_file)
-
-    if spara_offert:
-        filnamn = f"offert_{kund_namn.replace(' ', '_')}_{datetime.today().strftime('%Y%m%d')}.txt"
-        with open(filnamn, "w", encoding="utf-8") as f:
-            f.write(offert_text)
-        with open(filnamn, "rb") as f:
-            st.download_button("💾 Ladda ner offert som textfil", f, file_name=filnamn)
-        os.remove(filnamn)
+    # PDF-export
+    class PDF(FPDF):
+        def header(self):
+            self.set_font("Arial", "B", 14)
+            self.cell(0, 10, "Offert - Hantverkartjänster", 0, 1, "C")
+            self.ln(5)
+        def footer(self):
+            self.set_y(-15)
+            self.set_font("Arial", "I", 8)
+            self.cell(0, 10, f"Sida {self.page_no()}", 0, 0, "C")
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    radlista = [
+        f"Offert - {datetime.today().strftime('%Y-%m-%d')}",
+        f"Kund: {kund_namn}",
+        f"Adress: {kund_adress}",
+        f"Beskrivning: {arbetsbeskrivning}",
+        "", f"Totalt exkl. moms: {total_exkl_moms:.2f} kr",
+        f"Moms (25%): {moms_belopp:.2f} kr", f"Totalt inkl. moms: {total_inkl_moms:.2f} kr",
+    ]
+    if anvand_rot:
+        radlista.append(f"ROT-avdrag: -{rot_avdrag:.2f} kr")
+    radlista += [
+        f"Att betala: {att_betala:.2f} kr",
+        "", "Lönekalkyl enligt Bokio:", f"Vinst före schablonavdrag: {vinst:.2f} kr",
+        f"Schablonavdrag: -{schablon:.2f} kr", f"Sociala avgifter: {social_avgift:.2f} kr",
+        f"Nettovinst: {netto_efter_egenavg:.2f} kr", f"Kommunalskatt: {kommunalskatt:.2f} kr",
+        "", f"Att behålla (fika): {fikan:.2f} kr",
+    ]
+    for line in radlista:
+        pdf.multi_cell(0, 8, line)
+    pdf_file = f"offert_{kund_namn.replace(' ', '_')}_{datetime.today().strftime('%Y%m%d')}.pdf"
+    pdf.output(pdf_file)
+    with open(pdf_file, 'rb') as f:
+        st.download_button("📄 Ladda ner offert som PDF", f, file_name=pdf_file, mime="application/pdf")
+    os.remove(pdf_file)
