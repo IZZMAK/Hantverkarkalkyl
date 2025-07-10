@@ -92,18 +92,17 @@ if submitted:
     # Vinst för uppdraget (intäkter - kostnader)
     job_vinst = arbetskostnad - direkta_kostnader
 
-    # Lönekalkyl enligt Bokio (årlig) för att få fikanivå
-    vinst_schablon = vinst_per_ar * 0.75              # 25 % schablonavdrag
-    grundavdrag = min(25000, vinst_schablon * 0.02)    # förenklad formel
+    # Lönekalkyl enligt Bokio (årsvärden)
+    vinst_schablon = vinst_per_ar * 0.75  # 25 % schablonavdrag
+    grundavdrag = min(25000, vinst_schablon * 0.02)  # förenklad
     beskattningsbar = vinst_schablon - grundavdrag
-    skatt_fore = beskattningsbar * (kommunalskatt / 100)
+    socialavg = beskattningsbar * 0.2897  # egenavgifter 28,97 %
+    skatt_fore = (beskattningsbar - socialavg) * (kommunalskatt / 100)
     jobbskattavdrag = skatt_fore * 0.05
     skatt_efter = skatt_fore - jobbskattavdrag
-    nettolon = (beskattningsbar - skatt_efter) + ovrig_inkomst
-
-    # Beräkna fikanetthåll för uppdraget genom ratio
-    fika_ratio = nettolon / vinst_per_ar if vinst_per_ar else 0
-    fikan_uppdrag = job_vinst * fika_ratio
+    netto_efter_skatt = (beskattningsbar - socialavg) - skatt_efter
+    effekt_ratio = netto_efter_skatt / beskattningsbar if beskattningsbar else 0
+    fikan_uppdrag = job_vinst * effekt_ratio
 
     # --- RESULTATVISNING ---
     st.subheader("Offert")
