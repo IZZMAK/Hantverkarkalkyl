@@ -93,36 +93,40 @@ if submitted:
     job_vinst = arbetskostnad - direkta_kostnader
 
     # Lönekalkyl enligt Bokio (årsvärden)
-    vinst_schablon = vinst_per_ar * 0.75  # 25 % schablonavdrag
-    grundavdrag = min(25000, vinst_schablon * 0.02)  # förenklad
+    vinst_schablon = vinst_per_ar * 0.75
+    grundavdrag = min(25000, vinst_schablon * 0.02)
     beskattningsbar = vinst_schablon - grundavdrag
-    socialavg = beskattningsbar * 0.2897  # egenavgifter 28,97 %
+    socialavg = beskattningsbar * 0.2897
     skatt_fore = (beskattningsbar - socialavg) * (kommunalskatt / 100)
     jobbskattavdrag = skatt_fore * 0.05
     skatt_efter = skatt_fore - jobbskattavdrag
     netto_efter_skatt = (beskattningsbar - socialavg) - skatt_efter
+    nettolon = netto_efter_skatt + ovrig_inkomst  # nettolön efter skatt + övrig inkomst netto_efter_skatt + ovrig_inkomst
+
     effekt_ratio = netto_efter_skatt / beskattningsbar if beskattningsbar else 0
     fikan_uppdrag = job_vinst * effekt_ratio
 
     # --- RESULTATVISNING ---
+        # --- RESULTATVISNING ---
     st.subheader("Offert")
     st.text(f"Totalt exkl. moms: {total_exkl_moms:,.2f} kr")
     st.text(f"Moms 25 %: {moms_belopp:,.2f} kr")
     st.text(f"Totalt inkl. moms: {total_inkl_moms:,.2f} kr")
     if anvand_rot:
-        st.text(f"ROT‑avdrag (50 %): −{rot_avdrag:,.2f} kr")
+        st.text(f"ROT-avdrag (50 %): -{rot_avdrag:,.2f} kr")
     st.text(f"Att betala: {att_betala:,.2f} kr")
 
     st.markdown("---")
     st.subheader("Lönekalkyl enligt Bokio (årsvärden)")
-    st.text(f"nettobelopp efter skatt (helår): {nettolon:,.2f} kr")
+    st.text(f"Nettobelopp efter skatt (helår): {nettolon:,.2f} kr")
+
     st.markdown("---")
     st.subheader("Fika för detta uppdrag")
     st.text(f"Uppdragets vinst: {job_vinst:,.2f} kr")
-    st.text(f"Andel kvar efter skatt (årsfika ratio): {fika_ratio:.2%}")
+    st.text(f"Andel kvar efter skatt (årsvärde): {effekt_ratio:.2%}")
     st.text(f"Fika för uppdrag (estimerat): {fikan_uppdrag:,.2f} kr")
 
-    # --- PDF-EXPORT ---‑EXPORT ---
+    # --- PDF-EXPORT ---
     class PDF(FPDF):
         def header(self):
             self.set_font("Arial", "B", 14)
@@ -136,33 +140,31 @@ if submitted:
     pdf = PDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    lines = [
+    ascii_lines = [
         f"Offert - {datetime.today().strftime('%Y-%m-%d')}",
         f"Kund: {kund_namn}",
         f"Adress: {kund_adress}",
         f"Beskrivning: {arbetsbeskrivning}",
         "",
         f"Totalt exkl. moms: {total_exkl_moms:,.2f} kr",
-        f"Moms 25 %: {moms_belopp:,.2f} kr",
+        f"Moms 25 %: {moms_belopp:,.2f} kr",
         f"Totalt inkl. moms: {total_inkl_moms:,.2f} kr",
     ]
     if anvand_rot:
-        lines.append(f"ROT‑avdrag: −{rot_avdrag:,.2f} kr")
-    lines += [
+        ascii_lines.append(f"ROT-avdrag: -{rot_avdrag:,.2f} kr")
+    ascii_lines += [
         f"Att betala: {att_betala:,.2f} kr",
         "",
         "Lönekalkyl enligt Bokio:",
-        f"Vinst (före schablon): {vinst_per_ar:,.2f} kr",
-        f"Vinst efter schablon: {vinst_schablon:,.2f} kr",
-        f"Grundavdrag: {grundavdrag:,.2f} kr",
-        f"Beskattningsbar vinst: {beskattningsbar:,.2f} kr",
-        f"Skatt före jobbskatteavdrag: {skatt_fore:,.2f} kr",
-        f"Jobbskatteavdrag: −{jobbskattavdrag:,.2f} kr",
-        f"Skatt efter avdrag: {skatt_efter:,.2f} kr",
-        f"Nettolön inkl. övrig inkomst: {nettolon:,.2f} kr",
+        f"Nettobelopp efter skatt (helår): {nettolon:,.2f} kr",
+        "",
+        "Fika för detta uppdrag:",
+        f"Uppdragets vinst: {job_vinst:,.2f} kr",
+        f"Fika (efter skatt): {fikan_uppdrag:,.2f} kr",
     ]
-    for line in lines:
-        pdf.multi_cell(0, 8, line)
+    for line in ascii_lines:
+        pdf.multi_cell(0, 8, line.encode('latin-1', 'replace').decode('latin-1'))
+
     pdf_file = f"offert_{kund_namn.replace(' ', '_')}_{datetime.today().strftime('%Y%m%d')}.pdf"
     pdf.output(pdf_file)
     with open(pdf_file, "rb") as f:
